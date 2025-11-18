@@ -6,11 +6,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes(r *gin.Engine, bc *controller.BusinessController) {
+func SetupRoutes(r *gin.Engine, bc *controller.BusinessController, auth *controller.AuthController) {
 
 	api := r.Group("/api")
 
 	{
+
+		api.POST("/register", auth.Register)
+		api.POST("/login", auth.Login)
+
 		api.GET("/businesses", bc.ListBusiness)
 		api.GET("/businesses/:id", bc.FetchBusinessDetailById)
 		// api.GET("/businesses/events/:businessID", bc.StreamSSE)

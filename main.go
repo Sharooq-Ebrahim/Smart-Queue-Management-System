@@ -15,7 +15,7 @@ func init() {
 
 	config.ConnctDatabase()
 
-	if err := config.DB.AutoMigrate(&model.Business{}, &model.Queue{}); err != nil {
+	if err := config.DB.AutoMigrate(&model.User{}, &model.Business{}, &model.Queue{}); err != nil {
 		log.Println("Failed to migrate Db")
 	}
 
@@ -29,7 +29,8 @@ func main() {
 	r := gin.Default()
 	sse := sse.NewBroadcaster()
 	bc := &controller.BusinessController{Broadcaster: sse, DB: config.DB}
+	auth := &controller.AuthController{DB: config.DB}
 
-	routes.SetupRoutes(r, bc)
+	routes.SetupRoutes(r, bc, auth)
 	r.Run(":8080")
 }
