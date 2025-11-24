@@ -3,15 +3,19 @@ package controller
 import (
 	"log"
 	"net/http"
+	"smart-queue/config"
 	"smart-queue/model"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 type AuthController struct {
-	DB *gorm.DB
+	DB     *gorm.DB
+	Config *config.Config
 }
 
 func (auth *AuthController) Register(c *gin.Context) {
@@ -29,7 +33,6 @@ func (auth *AuthController) Register(c *gin.Context) {
 
 	log.Println("error", err)
 	if err == nil {
-		// record found
 		c.JSON(http.StatusConflict, gin.H{"error": "username already exists"})
 		return
 	}
@@ -39,6 +42,7 @@ func (auth *AuthController) Register(c *gin.Context) {
 	user := model.User{
 		UserName: userInfo.UserName,
 		Password: string(hashed),
+		Role:     "user",
 	}
 
 	if err := auth.DB.Create(&user).Error; err != nil {
@@ -75,6 +79,17 @@ func (auth *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, gin.H{"message": "User login successfully"})
+	claims := jwt.MapClaims{
+		"user_id": userInfo.ID,
+		"role":    userInfo.Role,
+		"exp":     time.Now().Add(24 * time.Hour).Unix(),
+	}
+	log.Println(auth.Config.JwtSecret)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, _ := token.SignedString([]byte(auth.Config.JwtSecret))
+
+	auth.DB.Model(&userInfo).Update("token", signedToken)
+
+	c.JSON(http.StatusAccepted, gin.H{"message": "User login successfully", "token": signedToken})
 
 }
