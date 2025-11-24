@@ -1,0 +1,47 @@
+# Compiled executable files
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Compiled Go packages (Go Modules)
+# The binary cache and module download cache are usually outside the project,
+# but if you build with -pkgdir, you might get a pkg/ directory.
+# The 'vendor' directory is typically committed if Go Modules are not used
+# or if you specifically choose to manage dependencies this way, but with modern
+# Go Modules, it's often ignored if it's only a local cache.
+# The standard recommendation is to *not* ignore 'vendor' if it exists.
+# However, if you are sure you don't need it in Git:
+# vendor/
+
+# Standard build outputs
+# Compiled binaries, often placed in the current directory or a 'bin' directory.
+# Replace 'myprogram' with your actual binary name if needed.
+# For example, if your main package is in the root:
+# myprogram
+# If you place all binaries in a 'bin' directory:
+bin/
+# Or if you use a 'build' directory:
+build/
+
+# IDE and Editor files
+# Visual Studio Code
+.vscode/
+
+# IntelliJ/GoLand
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Vim swap files
+*~
+*.swp
+
+# OS-generated files
+.DS_Store # macOS
+Thumbs.db # Windows
+
+# Environment and Configuration
+.env
+.env.local
