@@ -4,32 +4,31 @@ import (
 	"log"
 	"smart-queue/config"
 	"smart-queue/controller"
-	"smart-queue/model"
 	"smart-queue/routes"
 	"smart-queue/sse"
+
+	db "smart-queue/database"
 
 	"github.com/gin-gonic/gin"
 )
 
+var cfg *config.Config
+
 func init() {
-
-	config.ConnctDatabase()
-
-	if err := config.DB.AutoMigrate(&model.User{}, &model.Business{}, &model.Queue{}); err != nil {
-		log.Println("Failed to migrate Db")
+	var err error
+	cfg, err = config.LoadConfig()
+	if err != nil {
+		log.Fatal("Error loading config:", err)
 	}
-
-	log.Println("Database connected and migrated successfully")
+	db.ConnectDB(cfg.DatabaseURL)
 }
 
 func main() {
 
-	// config.ConnctDatabase()
-
 	r := gin.Default()
 	sse := sse.NewBroadcaster()
-	bc := &controller.BusinessController{Broadcaster: sse, DB: config.DB}
-	auth := &controller.AuthController{DB: config.DB}
+	bc := &controller.BusinessController{Broadcaster: sse, DB: db.DB}
+	auth := &controller.AuthController{DB: db.DB, Config: cfg}
 
 	routes.SetupRoutes(r, bc, auth)
 	r.Run(":8080")

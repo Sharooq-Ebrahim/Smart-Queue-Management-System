@@ -8,7 +8,7 @@ import (
 )
 
 type Event struct {
-	Type string      `json:"type"` // e.g., "queue_update"
+	Type string      `json:"type"`
 	Data interface{} `json:"data"`
 }
 
@@ -16,7 +16,7 @@ type subscriber chan Event
 
 type Broadcaster struct {
 	lock        sync.RWMutex
-	subscribers map[uint]map[subscriber]struct{} // businessID -> set of subscribers
+	subscribers map[uint]map[subscriber]struct{}
 }
 
 func NewBroadcaster() *Broadcaster {
@@ -56,19 +56,16 @@ func (b *Broadcaster) Publish(businessID uint, ev Event) {
 		select {
 		case ch <- ev:
 		default:
-			// subscriber full; drop (to keep non-blocking)
 			log.Println("Dropped event for subscriber")
 		}
 	}
 }
 
-// helper to produce JSON string for SSE
 func (e Event) JSON() string {
 	b, _ := json.Marshal(e)
 	return string(b)
 }
 
-// convenience
 func (b *Broadcaster) PublishQueueUpdate(businessID uint, data interface{}) {
 	ev := Event{Type: "queue_update", Data: data}
 	b.Publish(businessID, ev)

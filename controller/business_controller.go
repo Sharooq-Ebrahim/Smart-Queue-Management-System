@@ -127,14 +127,14 @@ func (h *BusinessController) JoinQueue(c *gin.Context) {
 		return
 	}
 
-	// 🔍 Step 1: Check if customer already joined the queue
+
 	var existing model.Queue
 	err := h.DB.Where("business_id = ? AND customer_id = ? AND status IN ?",
 		bid, req.CustomerId, []string{"waiting", "called"}).
 		First(&existing).Error
 
 	if err == nil {
-		// Already in queue
+	
 		c.JSON(http.StatusConflict, gin.H{
 			"error":  "Customer already in queue for this business",
 			"queue":  existing,
@@ -144,12 +144,12 @@ func (h *BusinessController) JoinQueue(c *gin.Context) {
 	}
 
 	if err != gorm.ErrRecordNotFound {
-		// DB error
+		
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
 
-	// 🧮 Step 2: Calculate position correctly
+
 	var position int64
 	if err := h.DB.Model(&model.Queue{}).
 		Where("business_id = ? AND status IN ?", bid, []string{"waiting", "called"}).
@@ -174,7 +174,6 @@ func (h *BusinessController) JoinQueue(c *gin.Context) {
 		EstimatedWaitTime: (&wait),
 	}
 
-	// 🧾 Step 3: Insert
 	if err := h.DB.Create(&queue).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to join queue"})
 		return
@@ -196,7 +195,7 @@ func (bc *BusinessController) LeaveQueue(c *gin.Context) {
 		CustomerId int64 `json:"customer_id"`
 	}
 
-	// Bind JSON body to req
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -231,7 +230,7 @@ func (bc *BusinessController) LeaveQueue(c *gin.Context) {
 		return
 	}
 
-	// Calculate Avg service time (minutes)
+
 	var avgServiceTime float64
 	if err := tx.Raw(`
     SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (completed_at - joined_at))/60), 0)
@@ -244,10 +243,10 @@ func (bc *BusinessController) LeaveQueue(c *gin.Context) {
 	}
 
 	if avgServiceTime <= 0 {
-		avgServiceTime = 5 // Fallback
+		avgServiceTime = 5 
 	}
 
-	// Bulk update others behind this person
+
 	if err := tx.Exec(`
         UPDATE queues
         SET 
@@ -263,13 +262,13 @@ func (bc *BusinessController) LeaveQueue(c *gin.Context) {
 		return
 	}
 
-	// Commit transaction
+
 	if err := tx.Commit().Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "transaction commit failed"})
 		return
 	}
 
-	// Broadcast update (if you use websockets / SSE)
+
 	bc.Broadcaster.Subscribe(uint(businessId))
 
 	c.JSON(http.StatusOK, gin.H{
